@@ -59,7 +59,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const repoName = github.repository;
+            const repoName = context.repo.repo;
             const exposureType = repoName.endsWith('external') ? 'external' : 'internal';
             core.exportVariable('EXPOSURE_TYPE', exposureType);
             console.log(`EXPOSURE_TYPE set to "${exposureType}".`);
