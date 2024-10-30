@@ -1,0 +1,67 @@
+name: OpenAPI 3 CI
+
+on: workflow_call
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: npm install @apidevtools/json-schema-ref-parser
+
+      - name: OpenAPI 3 resolve
+        uses: actions/github-script@v7
+        with:
+          script: |
+            import fs from 'fs/promises';
+            import yaml from 'js-yaml';
+            import $RefParser from "@apidevtools/json-schema-ref-parser";
+
+            async function resolverOpenAPI() {
+              try {
+                const outputFileName = 'resolved-openapi3.yaml';
+                const openapiResolved = await $RefParser.bundle('openapi3.yaml');
+                const openapiResolvedYAML = yaml.dump(openapiResolved, { indent: 2 });
+                fs.writeFileSync(outputFileName, openapiResolvedYAML);
+                console.log(`Check out the resolved file at: ${outputFileName}`);
+              } catch (err) {
+                console.error(err);
+              }
+            }
+
+            resolverOpenAPI();
+
+      - name: Upload resolved OpenAPI 3
+        uses: actions/upload-artifact@v4
+        with:
+          name: resolved-openapi3
+          path: resolved-openapi3.yaml
+
+  validate-openapi:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download resolved OpenAPI 3
+        uses: actions/download-artifact@v4
+        with:
+          name: resolved-openapi3
+
+      - name: Install Spectral CLI
+        run: npm install -g @stoplight/spectral-cli
+
+      - name: Checkout renanphellip/openapi-workflows
+        uses: actions/checkout@v4
+        with:
+          repository: renanphellip/openapi-workflows
+          ref: main
+          path: openapi-workflows
+
+      - name: Validate resolved OpenAPI 3
+        run: |
+          spectral lint resolved-openapi3.yaml --ruleset openapi-workflows/rulesets/custom-ruleset.yaml
