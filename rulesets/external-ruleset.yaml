@@ -1,0 +1,9 @@
+rules:
+  external-servers-url:
+    description: "Checks if all URLs in 'servers' have the domain '.xpto.dev'."
+    severity: error
+    given: $.servers[*].url
+    then:
+      function: pattern
+      functionOptions:
+        match: https?:\/\/[a-zA-Z0-9-.]+\.xpto\.dev\/[a-zA-Z0-9-]+\/v[0-9]+

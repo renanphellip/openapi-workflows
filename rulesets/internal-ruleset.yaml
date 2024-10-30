@@ -1,0 +1,9 @@
+rules:
+  internal-servers-url:
+    description: "Checks if all URLs in 'servers' have the domain '.internal'."
+    severity: error
+    given: $.servers[*].url
+    then:
+      function: pattern
+      functionOptions:
+        match: https?:\/\/[a-zA-Z0-9-.]+\.internal\/[a-zA-Z0-9-]+\/v[0-9]+
